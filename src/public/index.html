@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odds ao Vivo</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f0f12;
+        --card: #1a1a1e;
+        --text: #e0e0e0;
+        --text-muted: #888;
+        --primary: #00d4aa;
+        --border: #2a2a2e;
+        --hover: #252529;
+        --best: #00d4aa;
+        --best-bg: rgba(0, 212, 170, 0.15);
+        --favorite: #ffcc00;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 16px;
+        line-height: 1.5;
+        min-height: 100vh;
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 16px;
+        color: #fff;
+      }
+
+      .search-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        background: var(--card);
+        padding: 10px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font-size: 15px;
+        outline: none;
+        padding: 6px 0;
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--card);
+        border-radius: 0 0 14px 14px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        max-height: 180px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .dropdown.show {
+        display: block;
+      }
+
+      .dropdown-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .dropdown-item:hover,
+      .dropdown-item.selected {
+        background: var(--hover);
+      }
+
+      .dropdown-item .favorite-btn {
+        width: 18px;
+        height: 18px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .dropdown-item:hover .favorite-btn,
+      .dropdown-item.selected .favorite-btn {
+        opacity: 1;
+      }
+
+      .dropdown-item:last-child {
+        border-bottom: none;
+      }
+
+      button {
+        background: var(--primary);
+        color: #000;
+        border: none;
+        padding: 0 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 80px;
+        justify-content: center;
+      }
+
+      button:hover {
+        background: #00e6bb;
+        transform: translateY(-1px);
+      }
+
+      button .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .favorites-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .favorite-chip {
+        background: var(--card);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border);
+      }
+
+      .favorite-chip .remove {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        opacity: 0.7;
+      }
+
+      .favorite-chip .remove:hover {
+        opacity: 1;
+      }
+
+      #results {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .game {
+        background: var(--card);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s;
+      }
+
+      .game:hover {
+        transform: translateY(-1px);
+      }
+
+      .game-header {
+        background: linear-gradient(135deg, #1a1a1e, #252529);
+        padding: 12px 16px;
+        font-weight: 600;
+        font-size: 16px;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .game-time {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      .bookmaker-list {
+        padding: 0 16px 12px;
+      }
+
+      .bookmaker {
+        background: #252529;
+        margin-top: 10px;
+        border-radius: 10px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        border: 1px solid var(--border);
+      }
+
+      .bookmaker-name {
+        font-weight: 600;
+        color: #fff;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .best-label {
+        color: var(--best);
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .odds-row {
+        display: flex;
+        justify-content: space-between;
+        font-family: "Courier New", monospace;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      .odd-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        min-width: 50px;
+      }
+
+      .odd-label {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      .odd-value {
+        background: #2a2a2e;
+        color: var(--text);
+        padding: 5px 8px;
+        border-radius: 6px;
+        min-width: 44px;
+        text-align: center;
+        transition: all 0.2s;
+        font-size: 11px;
+      }
+
+      .odd-value.best {
+        background: var(--best-bg);
+        color: var(--best);
+        font-weight: 800;
+        box-shadow: 0 0 6px rgba(0, 212, 170, 0.3);
+      }
+
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 24px;
+        color: var(--text-muted);
+        font-style: italic;
+        font-size: 14px;
+      }
+
+      .refresh-info {
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 12px;
+      }
+
+      /* Responsivo */
+      @media (max-width: 480px) {
+        body {
+          padding: 12px;
+        }
+        h1 {
+          font-size: 18px;
+          margin-bottom: 12px;
+        }
+        .search-bar {
+          padding: 8px;
+          gap: 6px;
+        }
+        input {
+          font-size: 14px;
+        }
+        button {
+          padding: 0 12px;
+          font-size: 13px;
+        }
+        .game-header {
+          font-size: 15px;
+          padding: 10px 14px;
+        }
+        .game-time {
+          font-size: 11px;
+        }
+        .bookmaker {
+          padding: 10px 12px;
+        }
+        .odds-row {
+          gap: 4px;
+        }
+        .odd-item {
+          min-width: 44px;
+        }
+        .odd-value {
+          font-size: 10px;
+          padding: 4px 6px;
+          min-width: 38px;
+        }
+        .odd-label {
+          font-size: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Odds ao Vivo</h1>
+
+      <div class="search-bar">
+        <input id="search" type="text" />
+        <div id="dropdown" class="dropdown"></div>
+        <button id="btn">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+          </svg>
+          Buscar
+        </button>
+      </div>
+
+      <div id="favorites" class="favorites-list"></div>
+
+      <div id="results"></div>
+      <div class="refresh-info" id="refreshInfo">Busque para começar</div>
+    </div>
+
+    <script>
+      const searchInput = document.getElementById("search");
+      const btn = document.getElementById("btn");
+      const results = document.getElementById("results");
+      const refreshInfo = document.getElementById("refreshInfo");
+      const dropdown = document.getElementById("dropdown");
+      const favoritesContainer = document.getElementById("favorites");
+
+      const brasileiraoTeams = [
+        "Athletico-PR",
+        "Atlético-GO",
+        "Atlético-MG",
+        "Bahia",
+        "Botafogo",
+        "Bragantino",
+        "Ceará",
+        "Corinthians",
+        "Criciúma",
+        "Cruzeiro",
+        "Cuiabá",
+        "Flamengo",
+        "Fluminense",
+        "Fortaleza",
+        "Grêmio",
+        "Internacional",
+        "Juventude",
+        "Mirassol",
+        "Palmeiras",
+        "Santos",
+        "São Paulo",
+        "Sport",
+        "Vasco",
+        "Vitória",
+      ];
+
+      let lastQuery = "";
+      let intervalId = null;
+      let selectedIndex = -1;
+      let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+      const saveFavorites = () => {
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        renderFavorites();
+      };
+
+      const renderFavorites = () => {
+        favoritesContainer.innerHTML = "";
+        if (favorites.length === 0) return;
+
+        favorites.forEach((team) => {
+          const chip = document.createElement("div");
+          chip.className = "favorite-chip";
+          chip.innerHTML = `
+          <span>${team}</span>
+          <svg class="remove" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        `;
+          chip.querySelector(".remove").addEventListener("click", () => {
+            favorites = favorites.filter((f) => f !== team);
+            saveFavorites();
+          });
+          chip.addEventListener("click", () => {
+            searchInput.value = team;
+            search();
+          });
+          favoritesContainer.appendChild(chip);
+        });
+      };
+
+      const toggleFavorite = (team) => {
+        if (favorites.includes(team)) {
+          favorites = favorites.filter((f) => f !== team);
+        } else {
+          favorites.push(team);
+        }
+        saveFavorites();
+      };
+
+      const populateDropdown = (filter = "") => {
+        dropdown.innerHTML = "";
+        const filtered = brasileiraoTeams.filter((team) =>
+          team.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filtered.length === 0) {
+          dropdown.classList.remove("show");
+          return;
+        }
+
+        filtered.forEach((team, index) => {
+          const isFav = favorites.includes(team);
+          const item = document.createElement("div");
+          item.className = "dropdown-item";
+          item.innerHTML = `
+          <span>${team}</span>
+          <svg class="favorite-btn ${
+            isFav ? "filled" : ""
+          }" viewBox="0 0 24 24" fill="${
+            isFav ? "var(--favorite)" : "none"
+          }" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        `;
+          item.dataset.index = index;
+
+          item.addEventListener("click", (e) => {
+            if (e.target.closest(".favorite-btn")) {
+              toggleFavorite(team);
+              populateDropdown(searchInput.value.trim());
+            } else {
+              searchInput.value = team;
+              dropdown.classList.remove("show");
+              selectedIndex = -1;
+              search();
+            }
+          });
+
+          dropdown.appendChild(item);
+        });
+
+        dropdown.classList.add("show");
+      };
+
+      searchInput.addEventListener("input", (e) => {
+        populateDropdown(e.target.value.trim());
+        selectedIndex = -1;
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        const items = dropdown.querySelectorAll(".dropdown-item");
+        if (items.length === 0) return;
+
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+          updateSelection(items);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          selectedIndex = Math.max(selectedIndex - 1, -1);
+          updateSelection(items);
+        } else if (e.key === "Enter" && selectedIndex >= 0) {
+          e.preventDefault();
+          const team = items[selectedIndex].querySelector("span").textContent;
+          searchInput.value = team;
+          dropdown.classList.remove("show");
+          selectedIndex = -1;
+          search();
+        } else if (e.key === "Escape") {
+          dropdown.classList.remove("show");
+          selectedIndex = -1;
+        }
+      });
+
+      const updateSelection = (items) => {
+        items.forEach((item, i) => {
+          item.classList.toggle("selected", i === selectedIndex);
+        });
+        if (selectedIndex >= 0) {
+          items[selectedIndex].scrollIntoView({ block: "nearest" });
+        }
+      };
+
+      document.addEventListener("click", (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove("show");
+          selectedIndex = -1;
+        }
+      });
+
+      const fmt = (val) =>
+        val === undefined || val === null || val === "" ? "-" : val;
+
+      const getBestHome = (gameOdds) => {
+        let best = -Infinity;
+        gameOdds.forEach((item) => {
+          const home = parseFloat(item.odds.home);
+          if (!isNaN(home) && home > best) best = home;
+        });
+        return best === -Infinity ? null : best;
+      };
+
+      const renderGame = (gameOdds) => {
+        if (!gameOdds || gameOdds.length === 0) return null;
+
+        const first = gameOdds[0];
+        const bestHome = getBestHome(gameOdds);
+
+        const gameDiv = document.createElement("div");
+        gameDiv.className = "game";
+
+        let bookmakersHTML = "";
+
+        gameOdds.forEach((item) => {
+          const homeVal = parseFloat(item.odds.home);
+          const isBest = !isNaN(homeVal) && homeVal === bestHome;
+
+          bookmakersHTML += `
+          <div class="bookmaker">
+            <div class="bookmaker-name">
+              ${item.bookmaker}
+              ${isBest ? '<span class="best-label">Melhor</span>' : ""}
+            </div>
+            <div class="odds-row">
+              <div class="odd-item">
+                <div class="odd-label">Casa</div>
+                <div class="odd-value ${isBest ? "best" : ""}">${fmt(
+            item.odds.home
+          )}</div>
+              </div>
+              <div class="odd-item">
+                <div class="odd-label">Empate</div>
+                <div class="odd-value">${fmt(item.odds.draw)}</div>
+              </div>
+              <div class="odd-item">
+                <div class="odd-label">Derrota</div>
+                <div class="odd-value">${fmt(item.odds.away)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        });
+
+        const date = new Date(first.date);
+        const timeStr = date.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        gameDiv.innerHTML = `
+        <div class="game-header">
+          <div>${first.teams.home} × ${first.teams.away}</div>
+          <div class="game-time">${timeStr}</div>
+        </div>
+        <div class="bookmaker-list">
+          ${bookmakersHTML}
+        </div>
+      `;
+
+        return gameDiv;
+      };
+
+      const fetchAndRender = async (query) => {
+        if (!query) return;
+        lastQuery = query;
+
+        results.innerHTML = '<p class="loading">...</p>';
+
+        try {
+          const res = await fetch(`/api/gateway/query`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ search: encodeURIComponent(query) }),
+          });
+
+          if (!res.ok) throw new Error("API indisponível");
+
+          const data = await res.json();
+
+          results.innerHTML = "";
+          if (
+            !data ||
+            data.length === 0 ||
+            data.every((arr) => !arr || arr.length === 0)
+          ) {
+            results.innerHTML = '<p class="empty">Nenhum jogo encontrado.</p>';
+            return;
+          }
+
+          const sorted = [...data].sort((a, b) => {
+            const bestA = getBestHome(a);
+            const bestB = getBestHome(b);
+            return (bestB || 0) - (bestA || 0);
+          });
+
+          sorted.forEach((gameOdds) => {
+            const el = renderGame(gameOdds);
+            if (el) results.appendChild(el);
+          });
+
+          updateRefreshTime();
+        } catch (err) {
+          results.innerHTML = `<p class="loading">Erro: ${err.message}</p>`;
+        }
+      };
+
+      let countdown = 60;
+      const updateRefreshTime = () => {
+        refreshInfo.textContent = `Atualiza em ${countdown}s`;
+        countdown--;
+        if (countdown < 0) countdown = 60;
+      };
+
+      const startAutoRefresh = () => {
+        if (intervalId) clearInterval(intervalId);
+        countdown = 60;
+        updateRefreshTime();
+
+        intervalId = setInterval(() => {
+          updateRefreshTime();
+          if (countdown === 0 && lastQuery) {
+            fetchAndRender(lastQuery);
+          }
+        }, 1000);
+      };
+
+      const search = () => {
+        const q = searchInput.value.trim();
+        if (!q) return;
+        fetchAndRender(q);
+        startAutoRefresh();
+      };
+
+      btn.addEventListener("click", search);
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          search();
+        }
+      });
+
+      renderFavorites();
+    </script>
+  </body>
+</html>
