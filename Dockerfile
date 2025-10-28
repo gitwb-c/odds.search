@@ -10,6 +10,6 @@ COPY . .
 
 RUN npx tsc
 
-EXPOSE $PORT
+EXPOSE ${PORT}
 
 CMD ["node", "dist/server.js"]

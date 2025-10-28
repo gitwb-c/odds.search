@@ -1,0 +1,19 @@
+"use strict";
+const leagues = [
+    "usa-nba",
+    "argentina-liga-profesional",
+    "brazil-brasileiro-serie-a",
+    "brazil-brasileiro-serie-b",
+    "international-clubs-copa-libertadores",
+    "international-clubs-copa-sudamericana",
+    "international-clubs-copa-sudamericana",
+    "international-clubs-uefa-europa-league",
+    "france-ligue-1",
+    "germany-bundesliga",
+    "netherlands-eredivisie",
+    "portugal-liga-portugal",
+    "spain-laliga",
+    "international-clubs-uefa-champions-league",
+    "international-clubs-uefa-europa-league",
+    "usa-mls",
+];
