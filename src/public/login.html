@@ -66,7 +66,6 @@
         position: relative;
         margin-bottom: 1.25rem;
       }
-
       .input-group input {
         width: 100%;
         padding: 0.9rem 1rem;
@@ -76,16 +75,12 @@
         background: #fafafa;
         transition: var(--transition);
         outline: none;
-        color: var(--text);
       }
-
       .input-group input:focus {
         border-color: var(--primary);
         background: #fff;
         box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.12);
-        transform: translateY(-1px);
       }
-
       .input-group label {
         position: absolute;
         left: 1rem;
@@ -98,7 +93,6 @@
         background: #fafafa;
         padding: 0 0.35rem;
       }
-
       .input-group input:focus ~ label,
       .input-group input:not(:placeholder-shown) ~ label {
         top: 0;
@@ -119,18 +113,15 @@
         cursor: pointer;
         margin-top: 0.75rem;
         transition: var(--transition);
-        position: relative;
-        overflow: hidden;
       }
-
-      button:hover {
+      button:hover:not(:disabled) {
         background: var(--primary-hover);
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0, 212, 170, 0.25);
       }
-
-      button:active {
-        transform: translateY(0);
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
 
       .error {
@@ -143,9 +134,18 @@
         opacity: 0;
         transition: opacity 0.3s ease;
       }
-
       .error.show {
         opacity: 1;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        margin-top: 1rem;
+        color: var(--text-muted);
+      }
+      .loading.show {
+        display: block;
       }
 
       @keyframes fadeIn {
@@ -166,10 +166,19 @@
         }
       }
     </style>
+
+    <script>
+      const RECAPTCHA_SITE_KEY = "__RECAPTCHA_SITE_KEY__";
+    </script>
+    <script
+      src="https://www.google.com/recaptcha/api.js?render=__RECAPTCHA_SITE_KEY__&onload=onRecaptchaLoad"
+      async
+      defer
+    ></script>
   </head>
   <body>
     <div class="login-container">
-      <form action="/login" method="POST" id="loginForm">
+      <form id="loginForm" novalidate>
         <div class="input-group">
           <input
             type="text"
@@ -193,16 +202,16 @@
           <label for="password">Senha</label>
         </div>
 
-        <button type="submit">Entrar</button>
+        <button type="submit" id="submitBtn" disabled>Entrar</button>
         <p class="error" id="error"></p>
+        <p class="loading" id="loading">Carregando segurança...</p>
       </form>
     </div>
 
     <script>
       const urlParams = new URLSearchParams(window.location.search);
-      const error = urlParams.get("error");
       const errorEl = document.getElementById("error");
-
+      const error = urlParams.get("error");
       if (error) {
         errorEl.textContent = decodeURIComponent(error);
         errorEl.classList.add("show");
@@ -210,10 +219,60 @@
 
       document.getElementById("loginForm").addEventListener("input", () => {
         errorEl.classList.remove("show");
-        setTimeout(() => {
-          errorEl.textContent = "";
-        }, 300);
+        setTimeout(() => (errorEl.textContent = ""), 300);
       });
+
+      window.onRecaptchaLoad = function () {
+        document.getElementById("submitBtn").disabled = false;
+        document.getElementById("loading").classList.remove("show");
+      };
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitBtn = document.getElementById("submitBtn");
+          const loadingEl = document.getElementById("loading");
+          const formData = new FormData(this);
+
+          submitBtn.disabled = true;
+          loadingEl.classList.add("show");
+          loadingEl.textContent = "Verificando segurança...";
+          errorEl.classList.remove("show");
+
+          try {
+            const recaptchaToken = await grecaptcha.execute(
+              RECAPTCHA_SITE_KEY,
+              { action: "login" }
+            );
+            formData.append("g-recaptcha-response", recaptchaToken);
+
+            const response = await fetch("/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams(formData).toString(),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              window.location.href = "/odds";
+            } else {
+              errorEl.textContent = data.message || "Erro no login.";
+              errorEl.classList.add("show");
+            }
+          } catch (err) {
+            console.error(err);
+            errorEl.textContent = "Erro de conexão.";
+            errorEl.classList.add("show");
+          } finally {
+            submitBtn.disabled = false;
+            loadingEl.classList.remove("show");
+          }
+        });
     </script>
   </body>
 </html>
