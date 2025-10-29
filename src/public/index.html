@@ -334,7 +334,7 @@
       <h1>Odds ao Vivo</h1>
 
       <div class="search-bar">
-        <input id="search" type="text" />
+        <input id="search" type="text" placeholder="Pesquise por time..." />
         <div id="dropdown" class="dropdown"></div>
         <button id="btn">
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
@@ -360,32 +360,30 @@
       const dropdown = document.getElementById("dropdown");
       const favoritesContainer = document.getElementById("favorites");
 
-      const brasileiraoTeams = [
-        "Paranaense",
-        "Atletico",
-        "Bahia",
-        "Botafogo",
-        "Bragantino",
-        "Ceara",
-        "Corinthians",
-        "Criciuma",
-        "Cruzeiro",
-        "Cuiaba",
-        "Flamengo",
-        "Fluminense",
-        "Fortaleza",
-        "Gremio",
-        "Internacional",
-        "Juventude",
-        "Mirassol",
-        "Palmeiras",
-        "Santos",
-        "Sao Paulo",
-        "Vasco",
-        "Vitoria",
-        "Juventude",
-        "Goias",
-      ];
+      const teamMapping = {
+        "CA Paranaense PR": "Paranaense",
+        "Atletico Mineiro MG": "Atletico",
+        "EC Bahia BA": "Bahia",
+        "Botafogo FR RJ": "Botafogo",
+        "Red Bull Bragantino SP": "Bragantino",
+        "Ceara SC CE": "Ceara",
+        "SC Corinthians SP": "Corinthians",
+        "Criciuma EC SC": "Criciuma",
+        "Cruzeiro EC MG": "Cruzeiro",
+        "CR Flamengo RJ": "Flamengo",
+        "Fluminense FC RJ": "Fluminense",
+        "Fortaleza EC CE": "Fortaleza",
+        "Gremio FB Porto Alegrense RS": "Gremio",
+        "SC Internacional RS": "Internacional",
+        "EC Juventude RS": "Juventude",
+        "Mirassol FC SP": "Mirassol",
+        "SE Palmeiras SP": "Palmeiras",
+        "Santos FC SP": "Santos",
+        "Sao Paulo FC SP": "Sao Paulo",
+        "CR Vasco da Gama RJ": "Vasco",
+        "EC Vitoria BA": "Vitoria",
+        "Goias EC GO": "Goias",
+      };
 
       let lastQuery = "";
       let intervalId = null;
@@ -422,19 +420,19 @@
         });
       };
 
-      const toggleFavorite = (team) => {
-        if (favorites.includes(team)) {
-          favorites = favorites.filter((f) => f !== team);
+      const toggleFavorite = (display) => {
+        if (favorites.includes(display)) {
+          favorites = favorites.filter((f) => f !== display);
         } else {
-          favorites.push(team);
+          favorites.push(display);
         }
         saveFavorites();
       };
 
       const populateDropdown = (filter = "") => {
         dropdown.innerHTML = "";
-        const filtered = brasileiraoTeams.filter((team) =>
-          team.toLowerCase().includes(filter.toLowerCase())
+        const filtered = Object.keys(teamMapping).filter((display) =>
+          display.toLowerCase().includes(filter.toLowerCase())
         );
 
         if (filtered.length === 0) {
@@ -442,12 +440,12 @@
           return;
         }
 
-        filtered.forEach((team, index) => {
-          const isFav = favorites.includes(team);
+        filtered.forEach((display, index) => {
+          const isFav = favorites.includes(display);
           const item = document.createElement("div");
           item.className = "dropdown-item";
           item.innerHTML = `
-          <span>${team}</span>
+          <span>${display}</span>
           <svg class="favorite-btn ${
             isFav ? "filled" : ""
           }" viewBox="0 0 24 24" fill="${
@@ -460,10 +458,10 @@
 
           item.addEventListener("click", (e) => {
             if (e.target.closest(".favorite-btn")) {
-              toggleFavorite(team);
+              toggleFavorite(display);
               populateDropdown(searchInput.value.trim());
             } else {
-              searchInput.value = team;
+              searchInput.value = display;
               dropdown.classList.remove("show");
               selectedIndex = -1;
               search();
@@ -495,8 +493,9 @@
           updateSelection(items);
         } else if (e.key === "Enter" && selectedIndex >= 0) {
           e.preventDefault();
-          const team = items[selectedIndex].querySelector("span").textContent;
-          searchInput.value = team;
+          const display =
+            items[selectedIndex].querySelector("span").textContent;
+          searchInput.value = display;
           dropdown.classList.remove("show");
           selectedIndex = -1;
           search();
@@ -675,7 +674,8 @@
       const search = () => {
         const q = searchInput.value.trim();
         if (!q) return;
-        fetchAndRender(q);
+        const apiQuery = teamMapping[q] || q;
+        fetchAndRender(apiQuery);
         startAutoRefresh();
       };
 
