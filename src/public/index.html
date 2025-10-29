@@ -105,6 +105,7 @@
         justify-content: space-between;
         align-items: center;
         font-size: 14px;
+        color: #fff; /* Ajuste para texto branco nas opções de pesquisa */
       }
 
       .dropdown-item:hover,
@@ -229,8 +230,10 @@
         border-radius: 10px;
         padding: 12px 14px;
         display: flex;
-        flex-direction: column;
-        gap: 6px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
         border: 1px solid var(--border);
       }
 
@@ -239,38 +242,16 @@
         color: #fff;
         font-size: 13px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 6px;
+        flex: 1;
+        min-width: 100px;
       }
 
       .best-label {
         color: var(--best);
         font-size: 10px;
         font-weight: 700;
-      }
-
-      .odds-row {
-        display: flex;
-        justify-content: space-between;
-        font-family: "Courier New", monospace;
-        font-weight: 700;
-        font-size: 12px;
-      }
-
-      .odd-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 3px;
-        min-width: 50px;
-      }
-
-      .odd-label {
-        font-size: 9px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: var(--text-muted);
-        font-weight: 600;
       }
 
       .odd-value {
@@ -282,6 +263,8 @@
         text-align: center;
         transition: all 0.2s;
         font-size: 11px;
+        font-family: "Courier New", monospace;
+        font-weight: 700;
       }
 
       .odd-value.best {
@@ -336,20 +319,12 @@
         }
         .bookmaker {
           padding: 10px 12px;
-        }
-        .odds-row {
           gap: 4px;
-        }
-        .odd-item {
-          min-width: 44px;
         }
         .odd-value {
           font-size: 10px;
           padding: 4px 6px;
           min-width: 38px;
-        }
-        .odd-label {
-          font-size: 8px;
         }
       }
     </style>
@@ -386,30 +361,30 @@
       const favoritesContainer = document.getElementById("favorites");
 
       const brasileiraoTeams = [
-        "CA Paranaense PR",
-        "Atletico Mineiro MG",
-        "EC Bahia BA",
-        "Botafogo FR RJ",
-        "Red Bull Bragantino SP",
-        "Ceara SC CE",
-        "SC Corinthians SP",
-        "Criciuma EC SC",
-        "Cruzeiro EC MG",
-        "Cuiaba EC MT",
-        "CR Flamengo RJ",
-        "Fluminense FC RJ",
-        "Fortaleza EC CE",
-        "Gremio FB Porto Alegrense RS",
-        "SC Internacional RS",
-        "EC Juventude RS",
-        "Mirassol FC SP",
-        "SE Palmeiras SP",
-        "Santos FC SP",
-        "Sao Paulo FC SP",
-        "Vasco Da Gama",
-        "EC Vitoria BA",
-        "EC Juventude RS",
-        "Goias EC GO",
+        "Paranaense",
+        "Atletico",
+        "Bahia",
+        "Botafogo",
+        "Bragantino",
+        "Ceara",
+        "Corinthians",
+        "Criciuma",
+        "Cruzeiro",
+        "Cuiaba",
+        "Flamengo",
+        "Fluminense",
+        "Fortaleza",
+        "Gremio",
+        "Internacional",
+        "Juventude",
+        "Mirassol",
+        "Palmeiras",
+        "Santos",
+        "Sao Paulo",
+        "Vasco",
+        "Vitoria",
+        "Juventude",
+        "Goias",
       ];
 
       let lastQuery = "";
@@ -563,7 +538,19 @@
         if (!gameOdds || gameOdds.length === 0) return null;
 
         const first = gameOdds[0];
-        const bestHome = getBestHome(gameOdds);
+
+        let bestHome = -Infinity;
+        let bestDraw = -Infinity;
+        let bestAway = -Infinity;
+
+        gameOdds.forEach((item) => {
+          const h = parseFloat(item.odds.home);
+          if (!isNaN(h) && h > bestHome) bestHome = h;
+          const d = parseFloat(item.odds.draw);
+          if (!isNaN(d) && d > bestDraw) bestDraw = d;
+          const a = parseFloat(item.odds.away);
+          if (!isNaN(a) && a > bestAway) bestAway = a;
+        });
 
         const gameDiv = document.createElement("div");
         gameDiv.className = "game";
@@ -572,30 +559,30 @@
 
         gameOdds.forEach((item) => {
           const homeVal = parseFloat(item.odds.home);
-          const isBest = !isNaN(homeVal) && homeVal === bestHome;
+          const drawVal = parseFloat(item.odds.draw);
+          const awayVal = parseFloat(item.odds.away);
+
+          const isBestHome = !isNaN(homeVal) && homeVal === bestHome;
+          const isBestDraw = !isNaN(drawVal) && drawVal === bestDraw;
+          const isBestAway = !isNaN(awayVal) && awayVal === bestAway;
+
+          const hasBest = isBestHome || isBestDraw || isBestAway;
 
           bookmakersHTML += `
           <div class="bookmaker">
             <div class="bookmaker-name">
               ${item.bookmaker}
-              ${isBest ? '<span class="best-label">Melhor</span>' : ""}
+              ${hasBest ? '<span class="best-label">Melhor</span>' : ""}
             </div>
-            <div class="odds-row">
-              <div class="odd-item">
-                <div class="odd-label">Casa</div>
-                <div class="odd-value ${isBest ? "best" : ""}">${fmt(
+            <div class="odd-value ${isBestHome ? "best" : ""}">${fmt(
             item.odds.home
           )}</div>
-              </div>
-              <div class="odd-item">
-                <div class="odd-label">Empate</div>
-                <div class="odd-value">${fmt(item.odds.draw)}</div>
-              </div>
-              <div class="odd-item">
-                <div class="odd-label">Derrota</div>
-                <div class="odd-value">${fmt(item.odds.away)}</div>
-              </div>
-            </div>
+            <div class="odd-value ${isBestDraw ? "best" : ""}">${fmt(
+            item.odds.draw
+          )}</div>
+            <div class="odd-value ${isBestAway ? "best" : ""}">${fmt(
+            item.odds.away
+          )}</div>
           </div>
         `;
         });
