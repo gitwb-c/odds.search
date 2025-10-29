@@ -74,3 +74,12 @@ export interface ReCaptchaResponse {
   hostname?: string;
   "error-codes"?: string[];
 }
+
+export interface Credentials {
+  login: [
+    {
+      token: string;
+      password: string;
+    }
+  ];
+}

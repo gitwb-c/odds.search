@@ -6,8 +6,10 @@ import { gateway } from "./handlers/handler";
 import path from "path";
 import { ReCaptchaResponse } from "./contracts/contracts";
 import fs from "fs";
+import { decodeBase64 } from "./utils/credentials";
 
 dotenv.config();
+const credentials = decodeBase64(process.env.CREDENTIALS_BASE64!);
 
 const app = express();
 const PORT = process.env.API_PORT;
@@ -43,7 +45,6 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
   const { token, password, "g-recaptcha-response": recaptchaToken } = req.body;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY!;
-  console.log(secretKey);
   if (!recaptchaToken || !secretKey) {
     return res
       .status(400)
@@ -58,7 +59,6 @@ app.post("/login", async (req, res) => {
       body: `secret=${process.env
         .RECAPTCHA_SECRET_KEY!}&response=${recaptchaToken}&remoteip=${req.ip}`,
     });
-    console.log(verifyResponse);
 
     const verifyData = (await verifyResponse.json()) as ReCaptchaResponse;
 
@@ -67,20 +67,26 @@ app.post("/login", async (req, res) => {
       verifyData.action === "login" &&
       (verifyData.score ?? 0) >= 0.5
     ) {
-      if (token === process.env.TOKEN && password === process.env.PASSWORD) {
+      let verified: boolean = false;
+      let _token: string = "";
+      let _password: string = "";
+      for (let c = 0; c < credentials.login.length; c++) {
+        _token = credentials.login[c].token;
+        _password = credentials.login[c].password;
+        if (_token === token && _password === password) verified = true;
+      }
+      if (verified) {
         req.session.user = { token };
         return res.json({ success: true });
       } else {
         return res.json({ success: false, message: "Credenciais inválidas." });
       }
     } else {
-      console.log("reCAPTCHA falhou:", verifyData);
       return res
         .status(400)
         .json({ success: false, message: "Verificação de segurança falhou." });
     }
   } catch (error) {
-    console.error("Erro na verificação reCAPTCHA:", error);
     return res.status(500).json({ success: false, message: "Erro interno." });
   }
 });
