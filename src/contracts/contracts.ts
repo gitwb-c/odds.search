@@ -89,4 +89,5 @@ export interface JwtPayload {
   mfa?: boolean;
   mfa_setup?: boolean;
   temp_mfa_secret?: string;
+  mfa_secret?: string;
 }

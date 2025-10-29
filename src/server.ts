@@ -88,24 +88,28 @@ app.post("/login", async (req, res) => {
       }
 
       if (verified) {
-        const existingJwt = req.cookies.jwt;
-        let payload = existingJwt ? verifyJwt(existingJwt) : null;
+        const oldJwt = req.cookies.jwt;
+        const oldPayload = oldJwt ? verifyJwt(oldJwt) : null;
 
-        if (payload?.mfa_setup) {
+        const payloadToSign: JwtPayload = {
+          token: userToken,
+          mfa: oldPayload?.mfa || false,
+          mfa_setup: oldPayload?.mfa_setup || false,
+          mfa_secret: oldPayload?.mfa_secret,
+        };
+
+        const newJwt = signJwt(payloadToSign);
+
+        res.cookie("jwt", newJwt, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "strict",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        if (oldPayload?.mfa_setup) {
           return res.json({ success: true, redirect: "/mfa" });
         } else {
-          const initialJwt = signJwt({
-            token: userToken,
-            mfa_setup: false,
-          });
-
-          res.cookie("jwt", initialJwt, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-          });
-
           return res.json({ success: true, redirect: "/mfa/setup" });
         }
       } else {
@@ -123,17 +127,21 @@ app.post("/login", async (req, res) => {
 
 app.get("/odds", authenticateJwt, (req, res) => {
   const payload = (req as any).user as JwtPayload;
+
   if (!payload.mfa) {
     return res.redirect("/mfa");
   }
+
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/mfa", authenticateJwt, (req, res) => {
   const payload = (req as any).user as JwtPayload;
-  if (payload.mfa) {
-    return res.redirect("/odds");
+
+  if (!payload.mfa_setup) {
+    return res.redirect("/mfa/setup");
   }
+
   res.sendFile(path.join(__dirname, "public", "mfa.html"));
 });
 
@@ -141,22 +149,27 @@ app.post("/mfa", authenticateJwt, (req, res) => {
   const { code } = req.body;
   const payload = (req as any).user as JwtPayload;
 
-  if (!payload || payload.mfa) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Sessão inválida." });
+  if (!payload.mfa_secret) {
+    return res.json({ success: false, message: "Configuração MFA ausente." });
   }
 
-  const isValid = verifyMfaToken(code, getMfaSecret());
+  const isValid = verifyMfaToken(code, payload.mfa_secret);
 
   if (isValid) {
-    const newJwt = signJwt({ token: payload.token, mfa: true });
+    const newJwt = signJwt({
+      token: payload.token,
+      mfa: true,
+      mfa_setup: true,
+      mfa_secret: payload.mfa_secret,
+    });
+
     res.cookie("jwt", newJwt, {
       httpOnly: true,
       secure: false,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
     return res.json({ success: true });
   } else {
     return res.json({ success: false, message: "Código MFA inválido." });
@@ -213,6 +226,7 @@ app.post("/mfa/verify-setup", authenticateJwt, (req, res) => {
       token: payload.token,
       mfa: true,
       mfa_setup: true,
+      mfa_secret: payload.temp_mfa_secret,
     });
 
     res.cookie("jwt", finalJwt, {
@@ -233,5 +247,5 @@ app.use(express.static(path.join(__dirname, "public")));
 app.post("/api/gateway/:method", gateway.handleGateway);
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port: ${PORT}`);
 });
