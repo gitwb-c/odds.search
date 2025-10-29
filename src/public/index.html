@@ -136,7 +136,7 @@
         justify-content: space-between;
         align-items: center;
         font-size: 14px;
-        color: #000; /* Ajuste para texto preto nas opções de pesquisa */
+        color: #000;
       }
 
       .dropdown-item:hover,
@@ -819,11 +819,9 @@
       };
 
       const sortGames = (games) => {
-        return [...games].sort((a, b) => {
-          const bestA = getBestHome(a);
-          const bestB = getBestHome(b);
-          return (bestB || 0) - (bestA || 0);
-        });
+        return [...games].sort(
+          (a, b) => new Date(a[0].date) - new Date(b[0].date)
+        );
       };
 
       const renderResults = () => {

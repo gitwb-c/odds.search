@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,7 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { fetchEvents, filterEvents, fetchOdds, convertEventsToUI, } from "../utils/utils";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.gateway = void 0;
+const utils_1 = require("../utils/utils");
 class Gateway {
     constructor() {
         this.handleGateway = (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -34,14 +37,14 @@ class Gateway {
 }
 const query = (search) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const matches = yield fetchEvents(search);
-        const filtered = filterEvents(matches);
-        const odds = yield fetchOdds(filtered);
-        const uiEvents = convertEventsToUI(odds);
+        const matches = yield (0, utils_1.fetchEvents)(search);
+        const filtered = (0, utils_1.filterEvents)(matches);
+        const odds = yield (0, utils_1.fetchOdds)(filtered);
+        const uiEvents = (0, utils_1.convertEventsToUI)(odds);
         return uiEvents;
     }
     catch (_a) {
         return [];
     }
 });
-export const gateway = new Gateway();
+exports.gateway = new Gateway();

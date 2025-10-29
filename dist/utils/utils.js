@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,12 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import dotenv from "dotenv";
-dotenv.config();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.convertEventsToUI = exports.mapEventToUI = exports.filterEvents = exports.fetchEvents = exports.fetchOdds = void 0;
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const apiKey = process.env.ODDS_API_KEY;
 const DEFAULT_BOOKMAKERS = ["Bet365", "Betano", "Novibet", "Stake", "Superbet"];
 const DEFAULT_SLUGS = ["football", "basketball"];
-export const fetchOdds = (events_1, ...args_1) => __awaiter(void 0, [events_1, ...args_1], void 0, function* (events, bookmakers = DEFAULT_BOOKMAKERS) {
+const fetchOdds = (events_1, ...args_1) => __awaiter(void 0, [events_1, ...args_1], void 0, function* (events, bookmakers = DEFAULT_BOOKMAKERS) {
     if (!(events === null || events === void 0 ? void 0 : events.length))
         return [];
     if (!(bookmakers === null || bookmakers === void 0 ? void 0 : bookmakers.length))
@@ -38,7 +44,8 @@ export const fetchOdds = (events_1, ...args_1) => __awaiter(void 0, [events_1, .
             : new Error("unknown error while fetching odds");
     }
 });
-export const fetchEvents = (query) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fetchOdds = fetchOdds;
+const fetchEvents = (query) => __awaiter(void 0, void 0, void 0, function* () {
     if (!(query === null || query === void 0 ? void 0 : query.trim())) {
         throw new Error("Search query is required");
     }
@@ -62,7 +69,8 @@ export const fetchEvents = (query) => __awaiter(void 0, void 0, void 0, function
             : new Error("unknown error while fetching events");
     }
 });
-export const filterEvents = (events, slugs = DEFAULT_SLUGS) => {
+exports.fetchEvents = fetchEvents;
+const filterEvents = (events, slugs = DEFAULT_SLUGS) => {
     if (!(events === null || events === void 0 ? void 0 : events.length) || !(slugs === null || slugs === void 0 ? void 0 : slugs.length))
         return [];
     const slugSet = new Set(slugs.map((s) => s.toLowerCase()));
@@ -73,7 +81,8 @@ export const filterEvents = (events, slugs = DEFAULT_SLUGS) => {
         return slugSet.has(e.sport.slug.toLowerCase());
     });
 };
-export const mapEventToUI = (eventOdd, bookmakers = DEFAULT_BOOKMAKERS) => {
+exports.filterEvents = filterEvents;
+const mapEventToUI = (eventOdd, bookmakers = DEFAULT_BOOKMAKERS) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
     if (!eventOdd || !(bookmakers === null || bookmakers === void 0 ? void 0 : bookmakers.length))
         return [];
@@ -95,6 +104,8 @@ export const mapEventToUI = (eventOdd, bookmakers = DEFAULT_BOOKMAKERS) => {
                     away: (_m = (_l = oddsData.away) === null || _l === void 0 ? void 0 : _l.toString()) !== null && _m !== void 0 ? _m : "-",
                 },
                 date: (_o = eventOdd.date) !== null && _o !== void 0 ? _o : new Date().toISOString(),
+                sport: eventOdd.sport.slug,
+                url: eventOdd.urls[bookmaker],
             };
             result.push(ui);
         }
@@ -104,13 +115,14 @@ export const mapEventToUI = (eventOdd, bookmakers = DEFAULT_BOOKMAKERS) => {
     }
     return result;
 };
-export const convertEventsToUI = (eventsOdds, bookmakers = DEFAULT_BOOKMAKERS) => {
+exports.mapEventToUI = mapEventToUI;
+const convertEventsToUI = (eventsOdds, bookmakers = DEFAULT_BOOKMAKERS) => {
     if (!(eventsOdds === null || eventsOdds === void 0 ? void 0 : eventsOdds.length) || !(bookmakers === null || bookmakers === void 0 ? void 0 : bookmakers.length))
         return [];
     return eventsOdds
         .map((eventOdd) => {
         try {
-            return mapEventToUI(eventOdd, bookmakers);
+            return (0, exports.mapEventToUI)(eventOdd, bookmakers);
         }
         catch (error) {
             return [];
@@ -118,3 +130,4 @@ export const convertEventsToUI = (eventsOdds, bookmakers = DEFAULT_BOOKMAKERS) =
     })
         .filter((uiArray) => uiArray.length > 0);
 };
+exports.convertEventsToUI = convertEventsToUI;

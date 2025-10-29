@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #00d4aa;
+        --primary-hover: #00b894;
+        --bg: #ffffff;
+        --card: #ffffff;
+        --text: #1a1a1e;
+        --text-muted: #666666;
+        --border: #e0e0e0;
+        --error: #e74c3c;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --transition: all 0.25s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+        color: var(--text);
+      }
+
+      .login-container {
+        background: var(--card);
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 420px;
+        animation: fadeIn 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      .login-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary);
+      }
+
+      .input-group {
+        position: relative;
+        margin-bottom: 1.25rem;
+      }
+
+      .input-group input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+        border: 2px solid var(--border);
+        border-radius: 0.75rem;
+        background: #fafafa;
+        transition: var(--transition);
+        outline: none;
+        color: var(--text);
+      }
+
+      .input-group input:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.12);
+        transform: translateY(-1px);
+      }
+
+      .input-group label {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: var(--transition);
+        background: #fafafa;
+        padding: 0 0.35rem;
+      }
+
+      .input-group input:focus ~ label,
+      .input-group input:not(:placeholder-shown) ~ label {
+        top: 0;
+        font-size: 0.8rem;
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.75rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 212, 170, 0.25);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .error {
+        margin-top: 1rem;
+        text-align: center;
+        color: var(--error);
+        font-size: 0.9rem;
+        font-weight: 500;
+        min-height: 1.5em;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .error.show {
+        opacity: 1;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .login-container {
+          padding: 2rem;
+          border-radius: 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <form action="/login" method="POST" id="loginForm">
+        <div class="input-group">
+          <input
+            type="text"
+            name="token"
+            id="token"
+            placeholder=" "
+            required
+            autocomplete="off"
+          />
+          <label for="token">Token de Acesso</label>
+        </div>
+
+        <div class="input-group">
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder=" "
+            required
+          />
+          <label for="password">Senha</label>
+        </div>
+
+        <button type="submit">Entrar</button>
+        <p class="error" id="error"></p>
+      </form>
+    </div>
+
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get("error");
+      const errorEl = document.getElementById("error");
+
+      if (error) {
+        errorEl.textContent = decodeURIComponent(error);
+        errorEl.classList.add("show");
+      }
+
+      document.getElementById("loginForm").addEventListener("input", () => {
+        errorEl.classList.remove("show");
+        setTimeout(() => {
+          errorEl.textContent = "";
+        }, 300);
+      });
+    </script>
+  </body>
+</html>
