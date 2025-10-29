@@ -1,14 +1,15 @@
 import jwt from "jsonwebtoken";
+import { JwtPayload } from "../contracts/contracts";
 
 const JWT_SECRET = process.env.SECRET_KEY;
 
-export const signJwt = (payload: { token: string }) => {
+export const signJwt = (payload: JwtPayload) => {
   return jwt.sign(payload, JWT_SECRET!, { expiresIn: "7d" });
 };
 
-export const verifyJwt = (token: string): { token: string } | null => {
+export const verifyJwt = (token: string): JwtPayload | null => {
   try {
-    return jwt.verify(token, JWT_SECRET!) as { token: string };
+    return jwt.verify(token, JWT_SECRET!) as JwtPayload;
   } catch {
     return null;
   }

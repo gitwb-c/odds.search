@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MFA - Verificação</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #00d4aa;
+        --primary-hover: #00b894;
+        --bg: #ffffff;
+        --card: #ffffff;
+        --text: #1a1a1e;
+        --text-muted: #666666;
+        --border: #e0e0e0;
+        --error: #e74c3c;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --transition: all 0.25s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+        color: var(--text);
+      }
+
+      .mfa-container {
+        background: var(--card);
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        border: 1px solid var(--border);
+      }
+
+      .mfa-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary);
+        border-radius: 1.5rem 1.5rem 0 0;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      .input-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.5rem;
+        border: 2px solid var(--border);
+        border-radius: 0.75rem;
+        background: #fafafa;
+        outline: none;
+        transition: var(--transition);
+      }
+
+      input:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.12);
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .error {
+        margin-top: 1rem;
+        color: var(--error);
+        font-size: 0.9rem;
+        min-height: 1.5em;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .error.show {
+        opacity: 1;
+      }
+
+      .loading {
+        display: none;
+        margin-top: 1rem;
+        color: var(--text-muted);
+      }
+      .loading.show {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mfa-container">
+      <h2>2FA</h2>
+      <p>Insira o código de 6 dígitos do seu MFA.</p>
+      <form id="mfaForm">
+        <div class="input-group">
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            id="mfaCode"
+            required
+            autocomplete="off"
+          />
+        </div>
+        <button type="submit" id="submitBtn">Verificar</button>
+        <p class="error" id="error"></p>
+        <p class="loading" id="loading">Verificando...</p>
+      </form>
+    </div>
+
+    <script>
+      const form = document.getElementById("mfaForm");
+      const input = document.getElementById("mfaCode");
+      const errorEl = document.getElementById("error");
+      const loadingEl = document.getElementById("loading");
+      const submitBtn = document.getElementById("submitBtn");
+
+      // Auto-focus
+      input.focus();
+
+      // Aceita apenas números
+      input.addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const code = input.value.trim();
+
+        if (code.length !== 6) {
+          errorEl.textContent = "Código deve ter 6 dígitos.";
+          errorEl.classList.add("show");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        loadingEl.classList.add("show");
+        errorEl.classList.remove("show");
+
+        try {
+          const res = await fetch("/mfa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code }),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            window.location.href = "/odds";
+          } else {
+            errorEl.textContent = data.message || "Código inválido.";
+            errorEl.classList.add("show");
+          }
+        } catch {
+          errorEl.textContent = "Erro de conexão.";
+          errorEl.classList.add("show");
+        } finally {
+          submitBtn.disabled = false;
+          loadingEl.classList.remove("show");
+        }
+      });
+    </script>
+  </body>
+</html>

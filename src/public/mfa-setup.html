@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configurar MFA</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #00d4aa;
+        --primary-hover: #00b894;
+        --bg: #ffffff;
+        --card: #ffffff;
+        --text: #1a1a1e;
+        --border: #e0e0e0;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+      }
+
+      .setup-container {
+        background: var(--card);
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        border: 1px solid var(--border);
+        position: relative;
+      }
+
+      .setup-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary);
+        border-radius: 1.5rem 1.5rem 0 0;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      p {
+        color: #666;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      #qrcode {
+        margin: 1.5rem 0;
+      }
+      #secret {
+        font-family: monospace;
+        background: #f4f4f6;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        word-break: break-all;
+      }
+
+      input {
+        width: 100%;
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.5rem;
+        border: 2px solid var(--border);
+        border-radius: 0.75rem;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.12);
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .error {
+        color: #e74c3c;
+        margin-top: 1rem;
+        min-height: 1.5em;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .error.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="setup-container">
+      <h2>Configurar Autenticador</h2>
+      <p>Escanear o QR Code com o Google Authenticator</p>
+
+      <div id="qrcode">__QR_CODE__</div>
+
+      <div id="secret">__SECRET__</div>
+
+      <input
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="000000"
+        id="code"
+        autocomplete="off"
+      />
+      <button id="verifyBtn">Verificar e Ativar</button>
+      <p class="error" id="error"></p>
+    </div>
+
+    <script>
+      const secret = document
+        .getElementById("secret")
+        .textContent.replace("Chave: ", "")
+        .trim();
+
+      document.getElementById("code").focus();
+
+      document.getElementById("code").addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+      });
+
+      document.getElementById("verifyBtn").onclick = async () => {
+        const code = document.getElementById("code").value;
+        const errorEl = document.getElementById("error");
+        const btn = document.getElementById("verifyBtn");
+
+        if (code.length !== 6) {
+          errorEl.textContent = "Código deve ter 6 dígitos.";
+          errorEl.classList.add("show");
+          return;
+        }
+
+        btn.disabled = true;
+        errorEl.classList.remove("show");
+
+        try {
+          const res = await fetch("/mfa/verify-setup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, secret }),
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            window.location.href = "/odds";
+          } else {
+            errorEl.textContent = data.message || "Código inválido.";
+            errorEl.classList.add("show");
+          }
+        } catch {
+          errorEl.textContent = "Erro de conexão.";
+          errorEl.classList.add("show");
+        } finally {
+          btn.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>

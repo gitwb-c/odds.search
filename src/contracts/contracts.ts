@@ -83,3 +83,10 @@ export interface Credentials {
     }
   ];
 }
+
+export interface JwtPayload {
+  token: string;
+  mfa?: boolean;
+  mfa_setup?: boolean;
+  temp_mfa_secret?: string;
+}

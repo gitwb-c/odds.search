@@ -259,7 +259,7 @@
             const data = await response.json();
 
             if (data.success) {
-              window.location.href = "/odds";
+              window.location.href = data.redirect;
             } else {
               errorEl.textContent = data.message || "Erro no login.";
               errorEl.classList.add("show");
