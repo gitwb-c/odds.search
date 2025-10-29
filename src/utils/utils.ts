@@ -116,6 +116,7 @@ export const mapEventToUI = (
           away: oddsData.away?.toString() ?? "-",
         },
         date: eventOdd.date ?? new Date().toISOString(),
+        sport: eventOdd.sport.slug,
       };
 
       result.push(ui);

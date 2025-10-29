@@ -62,4 +62,5 @@ export interface UI {
     away: string;
   };
   date: string;
+  sport: string;
 }
