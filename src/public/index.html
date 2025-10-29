@@ -329,6 +329,7 @@
         font-size: 14px;
         font-family: "Courier New", monospace;
         font-weight: 700;
+        text-decoration: none;
       }
 
       .odd-value.best {
@@ -670,6 +671,7 @@
           const isBestAway = !isNaN(awayVal) && awayVal === bestAway;
 
           const hasBest = isBestHome || isBestDraw || isBestAway;
+          const link = item.url || "#";
 
           bookmakersHTML += `
             <div class="bookmaker">
@@ -680,19 +682,19 @@
                 ${item.bookmaker}
                 ${hasBest ? '<span class="best-label">Melhor</span>' : ""}
               </div>
-              <div class="odd-value ${isBestHome ? "best" : ""}">${fmt(
-            item.odds.home
-          )}</div>
+              <a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+            isBestHome ? "best" : ""
+          }">${fmt(item.odds.home)}</a>
               ${
                 hasDraw
-                  ? `<div class="odd-value ${isBestDraw ? "best" : ""}">${fmt(
-                      item.odds.draw
-                    )}</div>`
+                  ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+                      isBestDraw ? "best" : ""
+                    }">${fmt(item.odds.draw)}</a>`
                   : ""
               }
-              <div class="odd-value ${isBestAway ? "best" : ""}">${fmt(
-            item.odds.away
-          )}</div>
+              <a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+            isBestAway ? "best" : ""
+          }">${fmt(item.odds.away)}</a>
             </div>
           `;
         });
@@ -782,6 +784,7 @@
               const isBestAway = !isNaN(awayVal) && awayVal === bestAway;
 
               const hasBest = isBestHome || isBestDraw || isBestAway;
+              const link = item.url || "#";
 
               const bookmakerDiv = document.createElement("div");
               bookmakerDiv.className = "bookmaker";
@@ -793,19 +796,19 @@
                   ${item.bookmaker}
                   ${hasBest ? '<span class="best-label">Melhor</span>' : ""}
                 </div>
-                <div class="odd-value ${isBestHome ? "best" : ""}">${fmt(
-                item.odds.home
-              )}</div>
+                <a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+                isBestHome ? "best" : ""
+              }">${fmt(item.odds.home)}</a>
                 ${
                   hasDraw
-                    ? `<div class="odd-value ${isBestDraw ? "best" : ""}">${fmt(
-                        item.odds.draw
-                      )}</div>`
+                    ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+                        isBestDraw ? "best" : ""
+                      }">${fmt(item.odds.draw)}</a>`
                     : ""
                 }
-                <div class="odd-value ${isBestAway ? "best" : ""}">${fmt(
-                item.odds.away
-              )}</div>
+                <a href="${link}" target="_blank" rel="noopener noreferrer" class="odd-value ${
+                isBestAway ? "best" : ""
+              }">${fmt(item.odds.away)}</a>
               `;
               list.appendChild(bookmakerDiv);
             });

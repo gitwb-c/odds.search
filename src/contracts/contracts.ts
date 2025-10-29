@@ -63,4 +63,5 @@ export interface UI {
   };
   date: string;
   sport: string;
+  url: string;
 }

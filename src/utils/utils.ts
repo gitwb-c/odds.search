@@ -62,13 +62,12 @@ export const fetchEvents = async (query: string): Promise<Event[]> => {
       );
     }
 
-    const data = await response.json();
+    const data: Event[] = await response.json();
 
     if (!Array.isArray(data)) {
       throw new Error("events api response is not an array");
     }
-
-    return data as Event[];
+    return data;
   } catch (error) {
     throw error instanceof Error
       ? error
@@ -101,7 +100,6 @@ export const mapEventToUI = (
   for (const bookmaker of bookmakers) {
     try {
       const oddsData = eventOdd.bookmakers?.[bookmaker]?.[0]?.odds?.[0];
-
       if (!oddsData) continue;
 
       const ui: UI = {
@@ -117,6 +115,7 @@ export const mapEventToUI = (
         },
         date: eventOdd.date ?? new Date().toISOString(),
         sport: eventOdd.sport.slug,
+        url: eventOdd.urls[bookmaker],
       };
 
       result.push(ui);
