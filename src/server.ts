@@ -10,11 +10,15 @@ import cookieParser from "cookie-parser";
 import { signJwt, verifyJwt } from "./utils/jwt";
 import {
   verifyMfaToken,
-  getMfaSecret,
   generateMfaSecret,
   generateOtpAuthUrl,
   generateQrCode,
 } from "./utils/mfa";
+import {
+  invalidateOtherSessions,
+  createSession,
+  validateSession,
+} from "./utils/session_manager";
 
 dotenv.config();
 const credentials = decodeBase64(process.env.CREDENTIALS_BASE64!);
@@ -34,8 +38,15 @@ const authenticateJwt = (
   const token = req.cookies?.jwt;
   if (!token) return res.redirect("/");
 
-  const payload = verifyJwt(token);
-  if (!payload) return res.redirect("/");
+  const payload = verifyJwt(token) as JwtPayload | null;
+  if (!payload || !payload.sessionId) return res.redirect("/");
+
+  const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+
+  if (!validateSession(payload.token, payload.sessionId, clientIp)) {
+    res.clearCookie("jwt");
+    return res.redirect("/?error=Sessão inválida. Faça login novamente.");
+  }
 
   (req as any).user = payload;
   next();
@@ -52,6 +63,7 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
   const { token, password, "g-recaptcha-response": recaptchaToken } = req.body;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY!;
+  const clientIp = req.ip || req.socket.remoteAddress || "unknown";
 
   if (!recaptchaToken || !secretKey) {
     return res
@@ -65,7 +77,7 @@ app.post("/login", async (req, res) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `secret=${secretKey}&response=${recaptchaToken}&remoteip=${req.ip}`,
+        body: `secret=${secretKey}&response=${recaptchaToken}&remoteip=${clientIp}`,
       }
     );
 
@@ -91,11 +103,19 @@ app.post("/login", async (req, res) => {
         const oldJwt = req.cookies.jwt;
         const oldPayload = oldJwt ? verifyJwt(oldJwt) : null;
 
+        if (oldPayload?.sessionId && oldPayload?.ip !== clientIp) {
+          invalidateOtherSessions(userToken, oldPayload.sessionId);
+        }
+
+        const sessionId = createSession(userToken, clientIp);
+
         const payloadToSign: JwtPayload = {
           token: userToken,
           mfa: oldPayload?.mfa || false,
           mfa_setup: oldPayload?.mfa_setup || false,
           mfa_secret: oldPayload?.mfa_secret,
+          sessionId,
+          ip: clientIp,
         };
 
         const newJwt = signJwt(payloadToSign);
@@ -161,6 +181,8 @@ app.post("/mfa", authenticateJwt, (req, res) => {
       mfa: true,
       mfa_setup: true,
       mfa_secret: payload.mfa_secret,
+      sessionId: payload.sessionId,
+      ip: payload.ip,
     });
 
     res.cookie("jwt", newJwt, {
@@ -191,6 +213,8 @@ app.get("/mfa/setup", authenticateJwt, async (req, res) => {
     token: payload.token,
     mfa_setup: false,
     temp_mfa_secret: userSecret,
+    sessionId: payload.sessionId,
+    ip: payload.ip,
   });
 
   res.cookie("jwt", tempJwt, {
@@ -227,6 +251,8 @@ app.post("/mfa/verify-setup", authenticateJwt, (req, res) => {
       mfa: true,
       mfa_setup: true,
       mfa_secret: payload.temp_mfa_secret,
+      sessionId: payload.sessionId,
+      ip: payload.ip,
     });
 
     res.cookie("jwt", finalJwt, {
